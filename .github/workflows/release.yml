@@ -26,7 +26,6 @@ jobs:
         run: |
           VERSION=$(jq -r '.version' custom_components/hydropmeter/manifest.json)
           echo "version=$VERSION" >> $GITHUB_OUTPUT
-          echo "tag=v$VERSION" >> $GITHUB_OUTPUT
           echo "Detected version: $VERSION"
 
       - name: Check if release already exists
@@ -42,28 +41,30 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Extract changelog section for this version
+      - name: Extract changelog section and write to file
         if: steps.check.outputs.exists == 'false'
-        id: changelog
         run: |
           VERSION="${{ steps.version.outputs.version }}"
           # Extrahiert den Block zwischen ## [X.Y.Z] und dem nächsten ## [
-          BODY=$(awk "/^## \\[$VERSION\\]/{found=1; next} found && /^## \\[/{exit} found{print}" CHANGELOG.md \
-            | sed '/^[[:space:]]*$/d' | sed '1{/^[[:space:]]*$/d}')
-          if [ -z "$BODY" ]; then
-            BODY="See [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md) for details."
+          # Schreibt direkt in eine Datei, um Shell-Escaping-Probleme zu vermeiden
+          awk "/^## \\[$VERSION\\]/{found=1; next} found && /^## \\[/{exit} found && /^---$/{exit} found{print}" \
+            CHANGELOG.md | sed '/^[[:space:]]*$/{ N; /^\n[[:space:]]*$/d }' > /tmp/release_notes.md
+
+          # Fallback falls kein Eintrag gefunden
+          if [ ! -s /tmp/release_notes.md ]; then
+            echo "See [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md) for details." \
+              > /tmp/release_notes.md
           fi
-          # Multiline-safe via GitHub Output Delimiter
-          echo "body<<RELEASE_BODY_EOF" >> $GITHUB_OUTPUT
-          echo "$BODY" >> $GITHUB_OUTPUT
-          echo "RELEASE_BODY_EOF" >> $GITHUB_OUTPUT
+
+          echo "--- Release notes ---"
+          cat /tmp/release_notes.md
 
       - name: Create GitHub Release
         if: steps.check.outputs.exists == 'false'
         run: |
           gh release create "v${{ steps.version.outputs.version }}" \
             --title "v${{ steps.version.outputs.version }}" \
-            --notes "${{ steps.changelog.outputs.body }}"
+            --notes-file /tmp/release_notes.md
           echo "✅ Release v${{ steps.version.outputs.version }} created successfully."
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
