@@ -31,12 +31,21 @@ _LOGGER = logging.getLogger(__name__)
 PLATFORMS = ["sensor"]
 
 
+async def async_reload_entry(hass: HomeAssistant, entry: ConfigEntry) -> None:
+    """Integration nach Optionsänderung neu laden."""
+    await hass.config_entries.async_reload(entry.entry_id)
+
+
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Hydropmeter Integration aus einem Config Entry einrichten."""
-    api_key = entry.data[CONF_API_KEY]
-    sensor_name = entry.data[CONF_SENSOR_NAME]
-    scan_interval = entry.data.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL)
-    enable_flow = entry.data.get(CONF_ENABLE_FLOW_SENSOR, DEFAULT_ENABLE_FLOW_SENSOR)
+    # entry.options hat Vorrang (gesetzt nach Options-Flow-Änderungen)
+    def _conf(key: str, default=None):
+        return entry.options.get(key, entry.data.get(key, default))
+
+    api_key = _conf(CONF_API_KEY)
+    sensor_name = _conf(CONF_SENSOR_NAME)
+    scan_interval = _conf(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL)
+    enable_flow = _conf(CONF_ENABLE_FLOW_SENSOR, DEFAULT_ENABLE_FLOW_SENSOR)
 
     session = async_get_clientsession(hass)
     previous_data: list[dict | None] = [None]
@@ -124,6 +133,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     hass.data.setdefault(DOMAIN, {})[entry.entry_id] = coordinator
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+
+    # Reload auslösen wenn Optionen über den Options-Flow geändert werden
+    entry.async_on_unload(entry.add_update_listener(async_reload_entry))
+
     return True
 
 

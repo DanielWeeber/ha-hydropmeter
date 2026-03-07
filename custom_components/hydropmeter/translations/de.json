@@ -37,5 +37,39 @@
     "abort": {
       "already_configured": "Dieser Sensor ist bereits konfiguriert."
     }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Hydropmeter anpassen",
+        "description": "Aenderungen werden nach dem Speichern automatisch uebernommen -- die Integration wird neu geladen.",
+        "data": {
+          "name": "Name des Sensors",
+          "sensor_name": "Sensor-Bezeichnung",
+          "api_key": "API-Schluessel",
+          "scan_interval": "Aktualisierungsintervall (Sekunden)",
+          "enable_flow_sensor": "Durchfluss-Sensor anlegen (m3/h)"
+        },
+        "data_description": {
+          "name": "Wie soll der Sensor in Home Assistant heissen?",
+          "sensor_name": "Genauer Name des Sensors wie in der Hydrop App. Gross- und Kleinschreibung beachten.",
+          "api_key": "Dein persoenlicher API-Schluessel aus der Hydrop App. Nicht weitergeben.",
+          "scan_interval": "Wie oft (in Sekunden) der Zaehlerstand abgefragt wird. Minimum: 60. Empfehlung: 300.",
+          "enable_flow_sensor": "Aktiv: Zweiter Sensor 'Durchfluss (m3/h)' wird automatisch angelegt. Nicht aktiv: Durchfluss manuell per Helfer -> Ableitung einrichten."
+        }
+      }
+    },
+    "error": {
+      "invalid_auth": "Falscher API-Schluessel. Bitte pruefe, ob du den richtigen Schluessel aus der Hydrop App kopiert hast.",
+      "sensor_not_found": "Sensor nicht gefunden. Bitte die Sensor-Bezeichnung genau pruefen -- Gross- und Kleinschreibung muss exakt stimmen.",
+      "no_sensor_data": "Verbindung hat geklappt, aber es wurden keine Sensordaten zurueckgegeben. Bitte die Sensor-Bezeichnung pruefen.",
+      "no_records": "Sensor wurde gefunden, aber es sind noch keine Messwerte vorhanden. Bitte einen Moment warten und erneut versuchen.",
+      "network_error": "Keine Verbindung zur Hydrop API. Bitte pruefen, ob Home Assistant Internetzugang hat.",
+      "timeout": "Die Hydrop API antwortet nicht (Timeout). Bitte in einem Moment erneut versuchen.",
+      "server_error": "Der Hydrop-Server meldet einen Fehler. Bitte spaeter erneut versuchen.",
+      "invalid_response": "Die API hat eine unlesbare Antwort geliefert. Bitte Sensor-Bezeichnung und API-Schluessel pruefen.",
+      "cannot_connect": "Verbindung zur Hydrop API fehlgeschlagen. Bitte alle Eingaben pruefen.",
+      "unknown": "Unbekannter Fehler. Bitte unter Einstellungen -> System -> Protokolle nach 'hydropmeter' suchen."
+    }
   }
 }
