@@ -12,8 +12,8 @@ from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 from .const import (
     API_BASE_URL,
+    AUTHOR_URL,
     CONF_API_KEY,
-    CONF_DEVICE_ID,
     CONF_ENTITY_UNIQUE_ID,
     CONF_SCAN_INTERVAL,
     CONF_SENSOR_NAME,
@@ -22,6 +22,7 @@ from .const import (
     DEFAULT_SCAN_INTERVAL,
     DEFAULT_SENSOR_NAME,
     DOMAIN,
+    INTEGRATION_URL,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -35,7 +36,7 @@ class HydropMeterConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
     ) -> FlowResult:
-        """Ersten Einrichtungsschritt verarbeiten."""
+        """Einrichtungsformular anzeigen und verarbeiten."""
         errors: dict[str, str] = {}
 
         if user_input is not None:
@@ -49,7 +50,6 @@ class HydropMeterConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         data_schema = vol.Schema(
             {
                 vol.Required("name", default=DEFAULT_NAME): str,
-                vol.Required(CONF_DEVICE_ID): str,
                 vol.Required(CONF_SENSOR_NAME, default=DEFAULT_SENSOR_NAME): str,
                 vol.Required(CONF_API_KEY): str,
                 vol.Optional(
@@ -65,39 +65,81 @@ class HydropMeterConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             step_id="user",
             data_schema=data_schema,
             errors=errors,
+            description_placeholders={
+                "author_url": AUTHOR_URL,
+                "docs_url": INTEGRATION_URL,
+            },
         )
 
     async def _validate_input(self, data: dict[str, Any]) -> dict[str, str]:
-        """API-Verbindung testen und Eingaben validieren."""
+        """API-Verbindung testen – gibt spezifische Fehlercodes zurück."""
         errors: dict[str, str] = {}
         session = async_get_clientsession(self.hass)
-        url = (
-            f"{API_BASE_URL}/{data[CONF_DEVICE_ID]}"
-            f"/{data[CONF_SENSOR_NAME]}/newest"
-        )
+        url = f"{API_BASE_URL}/{data[CONF_SENSOR_NAME]}/newest"
         headers = {"apikey": data[CONF_API_KEY]}
+
+        _LOGGER.debug("Hydropmeter: Verbindungstest zu %s", url)
 
         try:
             async with session.get(
                 url,
                 headers=headers,
-                timeout=aiohttp.ClientTimeout(total=10),
+                timeout=aiohttp.ClientTimeout(total=15),
             ) as response:
-                if response.status == 401:
+                _LOGGER.debug("Hydropmeter: API-Antwort Status=%s", response.status)
+
+                if response.status in (401, 403):
                     errors["base"] = "invalid_auth"
+
                 elif response.status == 404:
-                    errors["base"] = "cannot_connect"
+                    errors["base"] = "sensor_not_found"
+
+                elif response.status >= 500:
+                    errors["base"] = "server_error"
+
                 elif not response.ok:
+                    _LOGGER.warning(
+                        "Hydropmeter: Unerwarteter HTTP-Status %s", response.status
+                    )
                     errors["base"] = "cannot_connect"
+
                 else:
-                    json_data = await response.json()
-                    if not json_data.get("sensors"):
-                        errors["base"] = "cannot_connect"
+                    try:
+                        json_data = await response.json(content_type=None)
+                    except Exception:
+                        _LOGGER.exception("Hydropmeter: JSON-Parsing fehlgeschlagen")
+                        errors["base"] = "invalid_response"
+                    else:
+                        sensors = json_data.get("sensors")
+                        if not sensors:
+                            _LOGGER.warning(
+                                "Hydropmeter: Keine Sensoren in Antwort: %s",
+                                str(json_data)[:200],
+                            )
+                            errors["base"] = "no_sensor_data"
+                        elif not sensors[0].get("records"):
+                            _LOGGER.warning(
+                                "Hydropmeter: Sensor gefunden, aber keine Messwerte"
+                            )
+                            errors["base"] = "no_records"
+
+        except aiohttp.ClientConnectorError:
+            _LOGGER.exception("Hydropmeter: Netzwerkverbindung fehlgeschlagen")
+            errors["base"] = "network_error"
+
+        except aiohttp.ServerTimeoutError:
+            _LOGGER.warning("Hydropmeter: API-Timeout (>15s)")
+            errors["base"] = "timeout"
 
         except aiohttp.ClientError:
+            _LOGGER.exception("Hydropmeter: Verbindungsfehler")
             errors["base"] = "cannot_connect"
-        except Exception:  # pylint: disable=broad-except
-            _LOGGER.exception("Unbekannter Fehler bei der Verbindungsprüfung")
+
+        except Exception:
+            _LOGGER.exception("Hydropmeter: Unbekannter Fehler beim Verbindungstest")
             errors["base"] = "unknown"
+
+        if not errors:
+            _LOGGER.debug("Hydropmeter: Verbindungstest erfolgreich")
 
         return errors

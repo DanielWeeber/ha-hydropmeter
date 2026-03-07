@@ -2,8 +2,13 @@
 
 DOMAIN = "hydropmeter"
 
+# Links
+INTEGRATION_URL = "https://github.com/DanielWeeber/ha-hydropmeter"
+AUTHOR_URL = "https://github.com/DanielWeeber"
+MANUFACTURER = "Hydrop Systems"
+INTEGRATION_AUTHOR = "DanielWeeber"
+
 # Config-Schlüssel
-CONF_DEVICE_ID = "device_id"
 CONF_SENSOR_NAME = "sensor_name"
 CONF_API_KEY = "api_key"
 CONF_ENTITY_UNIQUE_ID = "entity_unique_id"
@@ -15,5 +20,5 @@ DEFAULT_SENSOR_NAME = "Wasserzähler"
 DEFAULT_ENTITY_UNIQUE_ID = "wasserzaehler_hydrop"
 DEFAULT_SCAN_INTERVAL = 300  # 5 Minuten
 
-# API
-API_BASE_URL = "https://api.hydrop-systems.com/sensors"
+# API – "ID" ist ein fester Bestandteil der URL (kein Platzhalter)
+API_BASE_URL = "https://api.hydrop-systems.com/sensors/ID"
