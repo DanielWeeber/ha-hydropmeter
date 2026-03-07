@@ -46,7 +46,7 @@ class HydropMeterConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         config_entry: config_entries.ConfigEntry,
     ) -> HydropMeterOptionsFlow:
         """Options Flow für nachträgliche Änderungen."""
-        return HydropMeterOptionsFlow(config_entry)
+        return HydropMeterOptionsFlow()
 
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
@@ -92,10 +92,6 @@ class HydropMeterConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
 class HydropMeterOptionsFlow(config_entries.OptionsFlow):
     """Options Flow – Einstellungen nach der Ersteinrichtung ändern."""
-
-    def __init__(self, config_entry: config_entries.ConfigEntry) -> None:
-        """Initialisierung."""
-        self.config_entry = config_entry
 
     async def async_step_init(
         self, user_input: dict[str, Any] | None = None
