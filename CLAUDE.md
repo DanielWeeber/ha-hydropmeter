@@ -7,7 +7,7 @@ Sie enthält wichtige Konventionen und Prozesse, die bei jeder Arbeit an diesem 
 
 ## Repository-Übersicht
 
-HVAC/Wasser-Integration für Home Assistant zum Auslesen des **Hydrop Systems Wasserzählers** via Cloud API.
+HA-Integration zum Auslesen des **Hydrop Systems Wasserzählers** via Cloud API.
 
 - **Domain:** `hydropmeter`
 - **API:** `https://hydrop-systems.com/api/v1/device/{sensor_name}/newest` (Header: `apikey`)
@@ -18,64 +18,66 @@ HVAC/Wasser-Integration für Home Assistant zum Auslesen des **Hydrop Systems Wa
 
 | Datei | Inhalt |
 |---|---|
-| `custom_components/hydropmeter/manifest.json` | **Versionsnummer** – muss bei jedem Release erhöht werden |
-| `custom_components/hydropmeter/const.py` | `VERSION` Konstante – muss synchron mit manifest.json gehalten werden |
+| `custom_components/hydropmeter/manifest.json` | **Versionsnummer** – einziger Trigger für den Auto-Release |
+| `custom_components/hydropmeter/const.py` | `VERSION`-Konstante – muss synchron mit manifest.json gehalten werden |
 | `CHANGELOG.md` | Menschenlesbare Versionshistorie |
-| `hacs.json` | HACS-Konfiguration |
+| `.github/workflows/release.yml` | GitHub Action für automatische Releases |
 
 ---
 
-## Release-Prozess (PFLICHT bei jeder neuen Version)
+## Release-Prozess
 
-Damit der **Changelog im Home Assistant Update-Dialog erscheint**, muss zu jeder neuen Version ein **GitHub Release** erstellt werden. HACS liest den Changelog direkt aus dem Release Body des entsprechenden Git-Tags.
+### Vollautomatisch – nur 2 Dateien pushen
 
-### Schritt-für-Schritt
+Der Release (GitHub Release + Tag + Changelog im HA Update-Dialog) wird **vollautomatisch** durch die GitHub Action `.github/workflows/release.yml` erstellt, sobald `manifest.json` mit einer neuen Version auf `main` gepusht wird.
 
-1. **`manifest.json` aktualisieren**
-   ```json
-   { "version": "X.Y.Z" }
-   ```
+**Das bedeutet: Ich (Claude) muss nur diese zwei Dateien ändern und pushen — alles andere läuft von selbst.**
 
-2. **`const.py` aktualisieren** (falls `VERSION` dort definiert ist)
-   ```python
-   VERSION = "X.Y.Z"
-   ```
+#### Schritt 1: `manifest.json` – Versionsnummer erhöhen
+```json
+{ "version": "X.Y.Z" }
+```
 
-3. **`CHANGELOG.md` aktualisieren**
-   - Neuen Abschnitt `## [X.Y.Z] - YYYY-MM-DD` ganz oben einfügen
-   - Änderungen unter `### Added`, `### Changed`, `### Fixed`, `### Removed` kategorisieren
+#### Schritt 2: `CHANGELOG.md` – neuen Abschnitt ganz oben einfügen
+```markdown
+## [X.Y.Z] - YYYY-MM-DD
 
-4. **Commit & Push**
-   ```bash
-   git add .
-   git commit -m "release: bump version to X.Y.Z"
-   git push
-   ```
+### Added
+- ...
 
-5. **GitHub Release erstellen** ← DAS IST DER SCHLÜSSEL FÜR DEN HA-CHANGELOG
-   - Tag: `vX.Y.Z` (z.B. `v1.1.0`)
-   - Release Title: `vX.Y.Z`
-   - Release Body: **Den Inhalt des neuen Changelog-Abschnitts aus `CHANGELOG.md` einfügen**
-   - Via GitHub API (wenn Claude das übernimmt):
-     ```
-     mcp__github__create_release(
-       owner="DanielWeeber",
-       repo="ha-hydropmeter",
-       tag="vX.Y.Z",
-       name="vX.Y.Z",
-       body="<changelog text>"
-     )
-     ```
+### Fixed
+- ...
+```
 
-### Warum das wichtig ist
+#### Schritt 3: Beide Dateien in einem Commit pushen
+```python
+mcp__github__push_files(
+    owner="DanielWeeber",
+    repo="ha-hydropmeter",
+    branch="main",
+    message="release: bump version to X.Y.Z",
+    files=[
+        {"path": "custom_components/hydropmeter/manifest.json", "content": "..."},
+        {"path": "CHANGELOG.md", "content": "..."},
+        # Optional: const.py wenn VERSION dort auch definiert ist
+    ]
+)
+```
 
-HACS zeigt den Changelog im HA Update-Dialog an, indem es den **GitHub Release Body** des neuen Tags liest. Ohne ein GitHub Release (auch wenn der Code-Tag existiert) erscheint **kein Changelog** für den Nutzer.
+**Fertig.** Die GitHub Action liest automatisch den passenden Changelog-Block aus `CHANGELOG.md` und erstellt den Release mit dem korrekten Tag `vX.Y.Z`.
+
+### Was die Action macht (zur Information)
+
+1. Erkennt die neue Version aus `manifest.json`
+2. Prüft ob der Release-Tag bereits existiert (verhindert Duplikate)
+3. Extrahiert den passenden Block aus `CHANGELOG.md`
+4. Erstellt den GitHub Release mit Tag `vX.Y.Z` und dem Changelog als Body
 
 ---
 
 ## Semantic Versioning
 
-- `MAJOR` (X.0.0): Breaking changes (z.B. inkompatible Konfigurationsänderungen)
+- `MAJOR` (X.0.0): Breaking changes (z.B. inkompatible Konfiguration)
 - `MINOR` (0.X.0): Neue Features (rückwärtskompatibel)
 - `PATCH` (0.0.X): Bugfixes
 
@@ -85,5 +87,6 @@ HACS zeigt den Changelog im HA Update-Dialog an, indem es den **GitHub Release B
 
 - Kommentare und Log-Meldungen auf **Deutsch**
 - Kein `requirements` in manifest.json (nur stdlib + HA-builtins)
-- `entry.options` hat immer Vorrang vor `entry.data` (Options-Flow-Änderungen wirken sofort nach Reload)
-- Flow-Sensor-Berechnung: Delta m³ / Delta Stunden, nur bei `delta_m3 >= 0` (kein negativer Verbrauch)
+- `entry.options` hat Vorrang vor `entry.data` (Options-Flow-Änderungen wirken sofort)
+- Flow-Sensor-Berechnung: Delta m³ / Delta Stunden, nur bei `delta_m3 >= 0`
+- Durchfluss-Sensor gibt `0.0 m³/h` zurück wenn kein Wert vorliegt (nicht `None`/Unknown)
