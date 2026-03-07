@@ -1,0 +1,34 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Hydropmeter einrichten",
+        "description": "Verbinde deinen Hydrop Systems Wasserzähler mit Home Assistant. Die benötigten Werte findest du in der Hydrop App oder auf dem Produkt-Label.",
+        "data": {
+          "name": "Anzeigename",
+          "device_id": "Geräte-ID",
+          "sensor_name": "Sensor-Name (URL-Teil)",
+          "api_key": "API-Schlüssel",
+          "entity_unique_id": "Eindeutige ID der Entität",
+          "scan_interval": "Abfrageintervall (Sekunden)"
+        },
+        "data_description": {
+          "name": "Anzeigename des Sensors in Home Assistant",
+          "device_id": "Die numerische oder alphanumerische ID deines Hydropmeter-Geräts",
+          "sensor_name": "Name des Sensors in der API-URL, z.\u202fB. \"Wasserzähler\"",
+          "api_key": "Dein persönlicher API-Schlüssel von Hydrop Systems",
+          "entity_unique_id": "Eindeutige ID für die HA-Entität (Standard reicht in den meisten Fällen)",
+          "scan_interval": "Wie oft der Zählerstand abgefragt wird (Minimum: 60\u202fs)"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Verbindung fehlgeschlagen – bitte Geräte-ID und Sensor-Name prüfen.",
+      "invalid_auth": "Ungültiger API-Schlüssel.",
+      "unknown": "Unbekannter Fehler. Bitte die Logs prüfen."
+    },
+    "abort": {
+      "already_configured": "Dieses Gerät ist bereits konfiguriert."
+    }
+  }
+}
