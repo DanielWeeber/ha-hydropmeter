@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.0.1] - 2026-03-07
+
+### Added
+- Automated GitHub Release workflow via GitHub Actions
+- `CHANGELOG.md` for version history
+- `CLAUDE.md` as persistent memory for the release process
+
+### Fixed
+- Flow rate sensor now shows `0 m³/h` instead of `Unknown` when no value is available yet
+
+---
+
 ## [1.0.0] - 2025-05-01
 
 ### Added
@@ -16,6 +28,3 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Config Flow for easy setup via the HA UI
 - Options Flow to change API key, sensor name, scan interval and flow sensor toggle at runtime without re-setup
 - Full German translation
-
-### Fixed
-- Flow rate sensor now shows `0 m³/h` instead of `Unknown` when no value is available yet
