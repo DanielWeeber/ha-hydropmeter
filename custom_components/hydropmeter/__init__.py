@@ -63,14 +63,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                         "Bitte die Sensor-Bezeichnung in der Integration prüfen."
                     )
 
-                sensor_obj = sensors[0]
-                record = sensor_obj["records"][0]
+                record = sensors[0]["records"][0]
                 current_value = record.get("meterValue")
-
-                # Alle Metadaten aus dem Sensor-Objekt extrahieren (außer 'records')
-                device_meta = {
-                    k: v for k, v in sensor_obj.items() if k != "records"
-                }
 
                 # Durchflussrate in m³/h (nur wenn aktiviert)
                 flow_m3h: float | None = None
@@ -99,7 +93,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                     "meter_value": current_value,
                     "timestamp": record.get("timestamp"),
                     "flow_m3h": flow_m3h,
-                    "device_meta": device_meta,
                 }
 
         except aiohttp.ClientResponseError as err:
