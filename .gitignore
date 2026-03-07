@@ -1,0 +1,38 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.pycache
+
+# Virtuelle Umgebungen
+.venv/
+venv/
+env/
+
+# Editor & IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Thumbs.db
+
+# Pytest / Tests
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Distribution / Build
+dist/
+build/
+*.egg-info/
+
+# Temporäre Dateien
+*.log
+*.tmp
