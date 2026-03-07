@@ -14,9 +14,11 @@ from .const import (
     API_BASE_URL,
     AUTHOR_URL,
     CONF_API_KEY,
+    CONF_ENABLE_FLOW_SENSOR,
     CONF_ENTITY_UNIQUE_ID,
     CONF_SCAN_INTERVAL,
     CONF_SENSOR_NAME,
+    DEFAULT_ENABLE_FLOW_SENSOR,
     DEFAULT_ENTITY_UNIQUE_ID,
     DEFAULT_NAME,
     DEFAULT_SCAN_INTERVAL,
@@ -58,6 +60,9 @@ class HydropMeterConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 vol.Optional(
                     CONF_SCAN_INTERVAL, default=DEFAULT_SCAN_INTERVAL
                 ): vol.All(vol.Coerce(int), vol.Range(min=60, max=86400)),
+                vol.Optional(
+                    CONF_ENABLE_FLOW_SENSOR, default=DEFAULT_ENABLE_FLOW_SENSOR
+                ): bool,
             }
         )
 

@@ -9,14 +9,16 @@
           "sensor_name": "Sensor-Bezeichnung",
           "api_key": "API-Schluessel",
           "entity_unique_id": "Interne ID (optional)",
-          "scan_interval": "Aktualisierungsintervall (Sekunden)"
+          "scan_interval": "Aktualisierungsintervall (Sekunden)",
+          "enable_flow_sensor": "Durchfluss-Sensor anlegen (m3/h)"
         },
         "data_description": {
           "name": "Wie soll der Sensor in Home Assistant heissen? Z. B. 'Wasserzaehler Keller'.",
           "sensor_name": "Genauer Name des Sensors wie in der Hydrop App angezeigt, z. B. 'Wasserzaehler'. Gross- und Kleinschreibung beachten.",
           "api_key": "Dein persoenlicher API-Schluessel. Zu finden in der Hydrop App unter 'Einstellungen'. Nicht weitergeben.",
           "entity_unique_id": "Technische ID in Home Assistant. Standardwert so lassen -- nur aendern, wenn du mehrere Hydropmeter-Geraete hast.",
-          "scan_interval": "Wie oft (in Sekunden) der Zaehlerstand abgefragt wird. Minimum: 60. Empfehlung: 300 (alle 5 Minuten)."
+          "scan_interval": "Wie oft (in Sekunden) der Zaehlerstand abgefragt wird. Minimum: 60. Empfehlung: 300 (alle 5 Minuten).",
+          "enable_flow_sensor": "Aktiv: Die Integration legt automatisch einen zweiten Sensor 'Durchfluss (m3/h)' an. Der Wert erscheint erst nach dem zweiten Abruf-Zyklus. Nicht aktiv: Durchfluss-Sensor manuell anlegen ueber Einstellungen -> Helfer -> Ableitung (Quell-Sensor: dieser Wasserzaehler, Zeiteinheit: Stunden)."
         }
       }
     },

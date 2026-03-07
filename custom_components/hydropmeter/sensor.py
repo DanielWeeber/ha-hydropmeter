@@ -16,8 +16,10 @@ from homeassistant.helpers.update_coordinator import (
 
 from .const import (
     AUTHOR_URL,
+    CONF_ENABLE_FLOW_SENSOR,
     CONF_ENTITY_UNIQUE_ID,
     CONF_SENSOR_NAME,
+    DEFAULT_ENABLE_FLOW_SENSOR,
     DEFAULT_ENTITY_UNIQUE_ID,
     DEFAULT_NAME,
     DOMAIN,
@@ -34,12 +36,10 @@ async def async_setup_entry(
 ) -> None:
     """Hydropmeter Sensoren aus einem Config Entry einrichten."""
     coordinator: DataUpdateCoordinator = hass.data[DOMAIN][entry.entry_id]
-    async_add_entities(
-        [
-            HydropMeterSensor(coordinator, entry),
-            HydropFlowM3hSensor(coordinator, entry),
-        ]
-    )
+    entities: list = [HydropMeterSensor(coordinator, entry)]
+    if entry.data.get(CONF_ENABLE_FLOW_SENSOR, DEFAULT_ENABLE_FLOW_SENSOR):
+        entities.append(HydropFlowM3hSensor(coordinator, entry))
+    async_add_entities(entities)
 
 
 class _HydropBaseSensor(CoordinatorEntity, SensorEntity):

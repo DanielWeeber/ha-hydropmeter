@@ -5,6 +5,7 @@
 [![HA Version](https://img.shields.io/badge/Home%20Assistant-2023.x%2B-green.svg)](https://www.home-assistant.io/)
 
 Diese Integration verbindet den **Hydrop Systems Hydropmeter** Wasserzähler-Aufsatz mit Home Assistant. Der aktuelle Wasserverbrauch wird automatisch als Sensor bereitgestellt und kann direkt ins Energie-Dashboard eingebunden werden.
+Erstellt mit viel Liebe und KI.
 
 ---
 
