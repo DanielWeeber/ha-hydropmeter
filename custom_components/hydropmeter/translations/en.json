@@ -1,0 +1,41 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Set up Hydropmeter",
+        "description": "Connect your Hydrop Systems water meter to Home Assistant.\n\nAll credentials can be found in the Hydrop app. The connection will be tested automatically after confirming -- the integration is only saved if successful.\n\nIntegration by DanielWeeber",
+        "data": {
+          "name": "Sensor name",
+          "sensor_name": "Sensor identifier",
+          "api_key": "API key",
+          "entity_unique_id": "Internal ID (optional)",
+          "scan_interval": "Update interval (seconds)",
+          "enable_flow_sensor": "Create flow rate sensor (m\u00b3/h)"
+        },
+        "data_description": {
+          "name": "What should the sensor be called in Home Assistant? E.g. 'Water Meter Basement'.",
+          "sensor_name": "Exact name of the sensor as shown in the Hydrop app, e.g. 'Wasserzaehler'. Case-sensitive.",
+          "api_key": "Your personal API key. Found in the Hydrop app under 'Settings'. Do not share.",
+          "entity_unique_id": "Technical ID in Home Assistant. Leave default -- only change if you have multiple Hydropmeter devices.",
+          "scan_interval": "How often (in seconds) the meter reading is fetched. Minimum: 60. Recommended: 300 (every 5 minutes).",
+          "enable_flow_sensor": "Enabled: The integration automatically creates a second sensor 'Flow rate (m\u00b3/h)'. The value appears after the second polling cycle. Disabled: Create a flow sensor manually via Settings -> Helpers -> Derivative (source: this water meter, time unit: hours)."
+        }
+      }
+    },
+    "error": {
+      "invalid_auth": "Invalid API key. Please check that you copied the correct key from the Hydrop app.",
+      "sensor_not_found": "Sensor not found. Please check the sensor identifier exactly -- it is case-sensitive.",
+      "no_sensor_data": "Connection succeeded but no sensor data was returned. Please check the sensor identifier.",
+      "no_records": "Sensor found but no readings available yet. Please wait a moment and try again.",
+      "network_error": "Cannot reach the Hydrop API. Please check that Home Assistant has internet access.",
+      "timeout": "The Hydrop API did not respond (timeout). Please try again in a moment.",
+      "server_error": "The Hydrop server reported an error. Please try again later.",
+      "invalid_response": "The API returned an unreadable response. Please check the sensor identifier and API key.",
+      "cannot_connect": "Connection to the Hydrop API failed. Please check all inputs and ensure Home Assistant has internet access.",
+      "unknown": "Unknown error. Please check Settings -> System -> Logs and search for 'hydropmeter'."
+    },
+    "abort": {
+      "already_configured": "This sensor is already configured."
+    }
+  }
+}
