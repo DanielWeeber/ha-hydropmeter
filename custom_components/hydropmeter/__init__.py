@@ -6,7 +6,6 @@ Hardware: Hydrop Systems (https://hydrop-systems.com)
 from __future__ import annotations
 
 import logging
-import time
 from datetime import timedelta
 
 import aiohttp
@@ -37,15 +36,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     session = async_get_clientsession(hass)
 
-    # Closure-Variable zum Speichern des letzten bekannten Messwerts
-    # Format: {"meter_value": float, "fetched_at": monotonic_time}
-    previous_data: list[dict | None] = [None]
-
     async def async_fetch_data() -> dict:
         """Aktuelle Zählerdaten von der Hydrop API abrufen."""
         url = f"{API_BASE_URL}/{sensor_name}/newest"
         headers = {"apikey": api_key}
-        fetch_time = time.monotonic()
 
         try:
             async with session.get(
@@ -64,40 +58,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                     )
 
                 record = sensors[0]["records"][0]
-                current_value = record.get("meterValue")
-
-                # Durchflussrate berechnen (aus Differenz zum letzten Abruf)
-                flow_m3h: float | None = None
-                flow_lmin: float | None = None
-
-                if previous_data[0] is not None and current_value is not None:
-                    try:
-                        delta_m3 = float(current_value) - float(
-                            previous_data[0]["meter_value"]
-                        )
-                        delta_seconds = fetch_time - previous_data[0]["fetched_at"]
-                        delta_hours = delta_seconds / 3600
-
-                        if delta_hours > 0 and delta_m3 >= 0:
-                            flow_m3h = round(delta_m3 / delta_hours, 4)
-                            flow_lmin = round(flow_m3h * 1000 / 60, 2)
-                    except (TypeError, ValueError, ZeroDivisionError):
-                        _LOGGER.debug(
-                            "Hydropmeter: Durchflussberechnung nicht möglich"
-                        )
-
-                # Aktuellen Wert für nächste Berechnung speichern
-                if current_value is not None:
-                    previous_data[0] = {
-                        "meter_value": current_value,
-                        "fetched_at": fetch_time,
-                    }
-
                 return {
-                    "meter_value": current_value,
+                    "meter_value": record.get("meterValue"),
                     "timestamp": record.get("timestamp"),
-                    "flow_m3h": flow_m3h,
-                    "flow_lmin": flow_lmin,
                 }
 
         except aiohttp.ClientResponseError as err:
