@@ -1,11 +1,19 @@
 """Konstanten für die Hydropmeter Integration."""
+import json
+from pathlib import Path
 
 DOMAIN = "hydropmeter"
+
+# Version aus manifest.json lesen – nur dort pflegen
+_manifest = json.loads((Path(__file__).parent / "manifest.json").read_text())
+VERSION = _manifest.get("version", "unknown")
 
 # Links
 INTEGRATION_URL = "https://github.com/DanielWeeber/ha-hydropmeter"
 AUTHOR_URL = "https://github.com/DanielWeeber"
+AUTHOR_NAME = "Daniel Weeber"
 MANUFACTURER = "Hydrop Systems"
+MANUFACTURER_URL = "https://hydrop-systems.com"
 INTEGRATION_AUTHOR = "DanielWeeber"
 
 # Config-Schlüssel

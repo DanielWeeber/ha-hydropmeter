@@ -16,6 +16,7 @@ from homeassistant.helpers.update_coordinator import (
 )
 
 from .const import (
+    AUTHOR_NAME,
     AUTHOR_URL,
     CONF_ENABLE_FLOW_SENSOR,
     CONF_ENTITY_UNIQUE_ID,
@@ -27,6 +28,8 @@ from .const import (
     INTEGRATION_AUTHOR,
     INTEGRATION_URL,
     MANUFACTURER,
+    MANUFACTURER_URL,
+    VERSION,
 )
 
 
@@ -37,8 +40,12 @@ async def async_setup_entry(
 ) -> None:
     """Hydropmeter Sensoren aus einem Config Entry einrichten."""
     coordinator: DataUpdateCoordinator = hass.data[DOMAIN][entry.entry_id]
+    enable_flow = entry.options.get(
+        CONF_ENABLE_FLOW_SENSOR,
+        entry.data.get(CONF_ENABLE_FLOW_SENSOR, DEFAULT_ENABLE_FLOW_SENSOR),
+    )
     entities: list = [HydropMeterSensor(coordinator, entry)]
-    if entry.data.get(CONF_ENABLE_FLOW_SENSOR, DEFAULT_ENABLE_FLOW_SENSOR):
+    if enable_flow:
         entities.append(HydropFlowM3hSensor(coordinator, entry))
     async_add_entities(entities)
 
@@ -48,7 +55,7 @@ class _HydropBaseSensor(CoordinatorEntity, SensorEntity):
 
     _attr_attribution = (
         f"Integration by {INTEGRATION_AUTHOR} ({AUTHOR_URL})"
-        f" · Hardware by {MANUFACTURER}"
+        f" · Awesome Hardware by {MANUFACTURER} ({MANUFACTURER_URL})"
     )
 
     def __init__(
@@ -67,7 +74,10 @@ class _HydropBaseSensor(CoordinatorEntity, SensorEntity):
             "name": self._entry.data.get("name", DEFAULT_NAME),
             "manufacturer": MANUFACTURER,
             "model": "Hydropmeter",
-            "sw_version": f"Integration by {INTEGRATION_AUTHOR}",
+            "sw_version": (
+                f"Integration by {AUTHOR_NAME} (github.com/DanielWeeber)"
+                f" · v{VERSION}"
+            ),
             "entry_type": DeviceEntryType.SERVICE,
             "configuration_url": INTEGRATION_URL,
         }
