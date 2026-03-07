@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.0.4] - 2026-03-07
+
+### Fixed
+- Removed model field from device info that was displayed as unwanted text under the device entry
+
+---
+
 ## [1.0.3] - 2026-03-07
 
 ### Fixed
