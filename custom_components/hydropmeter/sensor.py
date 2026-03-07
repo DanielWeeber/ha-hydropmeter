@@ -1,4 +1,4 @@
-"""Sensor-Entität für die Hydropmeter Integration."""
+"""Sensor-Entitäten für die Hydropmeter Integration."""
 from __future__ import annotations
 
 from homeassistant.components.sensor import (
@@ -32,18 +32,19 @@ async def async_setup_entry(
     entry: ConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
-    """Hydropmeter Sensor aus einem Config Entry einrichten."""
+    """Hydropmeter Sensoren aus einem Config Entry einrichten."""
     coordinator: DataUpdateCoordinator = hass.data[DOMAIN][entry.entry_id]
-    async_add_entities([HydropMeterSensor(coordinator, entry)])
+    async_add_entities(
+        [
+            HydropMeterSensor(coordinator, entry),
+            HydropFlowM3hSensor(coordinator, entry),
+        ]
+    )
 
 
-class HydropMeterSensor(CoordinatorEntity, SensorEntity):
-    """Repräsentiert den Hydropmeter Wasserzähler als Home Assistant Sensor."""
+class _HydropBaseSensor(CoordinatorEntity, SensorEntity):
+    """Gemeinsame Basis für alle Hydropmeter-Sensoren."""
 
-    _attr_device_class = SensorDeviceClass.WATER
-    _attr_state_class = SensorStateClass.TOTAL_INCREASING
-    _attr_native_unit_of_measurement = "m³"
-    _attr_icon = "mdi:water-pump"
     _attr_attribution = (
         f"Integration by {INTEGRATION_AUTHOR} ({AUTHOR_URL})"
         f" · Hardware by {MANUFACTURER}"
@@ -54,13 +55,8 @@ class HydropMeterSensor(CoordinatorEntity, SensorEntity):
         coordinator: DataUpdateCoordinator,
         entry: ConfigEntry,
     ) -> None:
-        """Sensor initialisieren."""
         super().__init__(coordinator)
         self._entry = entry
-        self._attr_name = entry.data.get("name", DEFAULT_NAME)
-        self._attr_unique_id = entry.data.get(
-            CONF_ENTITY_UNIQUE_ID, DEFAULT_ENTITY_UNIQUE_ID
-        )
 
     @property
     def device_info(self) -> dict:
@@ -74,9 +70,24 @@ class HydropMeterSensor(CoordinatorEntity, SensorEntity):
             "configuration_url": INTEGRATION_URL,
         }
 
+
+class HydropMeterSensor(_HydropBaseSensor):
+    """Gesamtzählerstand in m³ (total_increasing, kompatibel mit Energie-Dashboard)."""
+
+    _attr_device_class = SensorDeviceClass.WATER
+    _attr_state_class = SensorStateClass.TOTAL_INCREASING
+    _attr_native_unit_of_measurement = "m³"
+    _attr_icon = "mdi:water-pump"
+
+    def __init__(self, coordinator: DataUpdateCoordinator, entry: ConfigEntry) -> None:
+        super().__init__(coordinator, entry)
+        self._attr_name = entry.data.get("name", DEFAULT_NAME)
+        self._attr_unique_id = entry.data.get(
+            CONF_ENTITY_UNIQUE_ID, DEFAULT_ENTITY_UNIQUE_ID
+        )
+
     @property
     def native_value(self) -> float | None:
-        """Aktuellen Zählerstand zurückgeben."""
         if self.coordinator.data:
             raw = self.coordinator.data.get("meter_value")
             try:
@@ -87,10 +98,31 @@ class HydropMeterSensor(CoordinatorEntity, SensorEntity):
 
     @property
     def extra_state_attributes(self) -> dict:
-        """Zusätzliche Attribute zurückgeben."""
         if not self.coordinator.data:
             return {}
         return {
             "timestamp": self.coordinator.data.get("timestamp"),
             "sensor_name": self._entry.data.get(CONF_SENSOR_NAME),
         }
+
+
+class HydropFlowM3hSensor(_HydropBaseSensor):
+    """Durchflussrate in m³/h, berechnet aus aufeinanderfolgenden Zählerständen."""
+
+    _attr_device_class = SensorDeviceClass.VOLUME_FLOW_RATE
+    _attr_state_class = SensorStateClass.MEASUREMENT
+    _attr_native_unit_of_measurement = "m³/h"
+    _attr_icon = "mdi:waves-arrow-right"
+
+    def __init__(self, coordinator: DataUpdateCoordinator, entry: ConfigEntry) -> None:
+        super().__init__(coordinator, entry)
+        sensor_name = entry.data.get(CONF_SENSOR_NAME, DEFAULT_NAME)
+        uid = entry.data.get(CONF_ENTITY_UNIQUE_ID, DEFAULT_ENTITY_UNIQUE_ID)
+        self._attr_name = f"{sensor_name} Durchfluss"
+        self._attr_unique_id = f"{uid}_flow_m3h"
+
+    @property
+    def native_value(self) -> float | None:
+        if self.coordinator.data:
+            return self.coordinator.data.get("flow_m3h")
+        return None

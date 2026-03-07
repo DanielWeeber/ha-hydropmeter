@@ -6,6 +6,7 @@ Hardware: Hydrop Systems (https://hydrop-systems.com)
 from __future__ import annotations
 
 import logging
+import time
 from datetime import timedelta
 
 import aiohttp
@@ -36,10 +37,15 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     session = async_get_clientsession(hass)
 
+    # Speichert den letzten Abruf für die Durchflussberechnung
+    # Format: {"meter_value": float, "fetched_at": monotonic_time}
+    previous_data: list[dict | None] = [None]
+
     async def async_fetch_data() -> dict:
         """Aktuelle Zählerdaten von der Hydrop API abrufen."""
         url = f"{API_BASE_URL}/{sensor_name}/newest"
         headers = {"apikey": api_key}
+        fetch_time = time.monotonic()
 
         try:
             async with session.get(
@@ -58,9 +64,35 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                     )
 
                 record = sensors[0]["records"][0]
+                current_value = record.get("meterValue")
+
+                # Durchflussrate in m³/h berechnen
+                flow_m3h: float | None = None
+                if previous_data[0] is not None and current_value is not None:
+                    try:
+                        delta_m3 = float(current_value) - float(
+                            previous_data[0]["meter_value"]
+                        )
+                        delta_hours = (
+                            fetch_time - previous_data[0]["fetched_at"]
+                        ) / 3600
+                        if delta_hours > 0 and delta_m3 >= 0:
+                            flow_m3h = round(delta_m3 / delta_hours, 4)
+                    except (TypeError, ValueError):
+                        _LOGGER.debug(
+                            "Hydropmeter: Durchflussberechnung nicht möglich"
+                        )
+
+                if current_value is not None:
+                    previous_data[0] = {
+                        "meter_value": current_value,
+                        "fetched_at": fetch_time,
+                    }
+
                 return {
-                    "meter_value": record.get("meterValue"),
+                    "meter_value": current_value,
                     "timestamp": record.get("timestamp"),
+                    "flow_m3h": flow_m3h,
                 }
 
         except aiohttp.ClientResponseError as err:

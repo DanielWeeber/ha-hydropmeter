@@ -21,7 +21,7 @@ Der [Hydropmeter von Hydrop Systems](https://hydrop-systems.com) ist ein Aufsatz
 - Konfiguration komplett über die **Benutzeroberfläche** (kein YAML erforderlich)
 - Einstellbares Abfrageintervall (Standard: alle 5 Minuten)
 - Automatische Fehlerbehandlung bei Verbindungsproblemen
-- Optional: **Durchflussrate** über HA-eigene Derivative-Helfer (m³/h, L/min)
+- **Durchflussrate** als zweiter Sensor (m³/h), automatisch berechnet
 
 ---
 
@@ -75,50 +75,11 @@ Nachdem der Sensor eingerichtet ist:
 
 ---
 
-## Durchflussrate (optional)
+## Durchflussrate
 
-Die Integration liefert den Gesamtzählerstand (m³). Um daraus eine Durchflussrate in **m³/h** oder **L/min** zu erhalten, kannst du HA's eingebauten **Derivative-Helfer** verwenden:
+Die Integration legt automatisch einen zweiten Sensor an: **`{Name} Durchfluss`** mit der Einheit **m³/h**. Die Rate wird aus der Differenz zweier aufeinanderfolgender Zählerstände berechnet.
 
-### Durchfluss in m³/h
-
-1. Gehe zu **Einstellungen → Geräte & Dienste → Helfer → Helfer erstellen**.
-2. Wähle **Ableitung eines Sensors** (Derivative).
-3. Konfiguriere:
-
-| Einstellung | Wert |
-|------------|------|
-| Name | `Wasserzähler Durchfluss` |
-| Eingabe-Sensor | dein Hydropmeter-Sensor (z. B. `sensor.wasserzahler`) |
-| Zeiteinheit | `Stunden (h)` |
-| Genauigkeit | `4` |
-
-→ Ergebnis: Sensor mit Einheit **m³/h**
-
-### Durchfluss in L/min
-
-Erstelle einen weiteren Derivative-Helfer mit:
-
-| Einstellung | Wert |
-|------------|------|
-| Name | `Wasserzähler Durchfluss Minuten` |
-| Eingabe-Sensor | dein Hydropmeter-Sensor |
-| Zeiteinheit | `Minuten (min)` |
-| Genauigkeit | `4` |
-
-Das ergibt **m³/min**. Für **L/min** erstelle anschließend einen Template-Sensor:
-
-```yaml
-# configuration.yaml
-template:
-  - sensor:
-      - name: "Wasserzähler Durchfluss L/min"
-        unit_of_measurement: "L/min"
-        device_class: volume_flow_rate
-        state_class: measurement
-        state: "{{ (states('sensor.wasserzahler_durchfluss_minuten') | float(0) * 1000) | round(2) }}"
-```
-
-> **Hinweis:** Die Derivative-Sensoren zeigen erst nach dem zweiten Abruf-Zyklus einen Wert (da eine Differenz benötigt wird). Bei einem Abfrageintervall von 5 Minuten kann es bis zu 10 Minuten dauern.
+> **Hinweis:** Der Durchfluss-Sensor zeigt erst nach dem zweiten Abruf-Zyklus einen Wert. Bei einem Abfrageintervall von 5 Minuten dauert das bis zu 10 Minuten nach dem Start.
 
 ---
 
