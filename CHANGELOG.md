@@ -16,3 +16,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Config Flow for easy setup via the HA UI
 - Options Flow to change API key, sensor name, scan interval and flow sensor toggle at runtime without re-setup
 - Full German translation
+
+### Fixed
+- Flow rate sensor now shows `0 m³/h` instead of `Unknown` when no value is available yet

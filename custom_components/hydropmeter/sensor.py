@@ -134,7 +134,8 @@ class HydropFlowM3hSensor(_HydropBaseSensor):
         self._attr_unique_id = f"{uid}_flow_m3h"
 
     @property
-    def native_value(self) -> float | None:
+    def native_value(self) -> float:
+        """Gibt den Durchflusswert zurück, oder 0.0 wenn noch kein Wert vorliegt."""
         if self.coordinator.data:
-            return self.coordinator.data.get("flow_m3h")
-        return None
+            return self.coordinator.data.get("flow_m3h") or 0.0
+        return 0.0
