@@ -52,11 +52,6 @@ async def async_setup_entry(
 class _HydropBaseSensor(CoordinatorEntity, SensorEntity):
     """Gemeinsame Basis für alle Hydropmeter-Sensoren."""
 
-    _attr_attribution = (
-        f"Integration by {AUTHOR_NAME} ({AUTHOR_URL})"
-        f" · Hardware by {MANUFACTURER} ({MANUFACTURER_URL})"
-    )
-
     def __init__(
         self,
         coordinator: DataUpdateCoordinator,
