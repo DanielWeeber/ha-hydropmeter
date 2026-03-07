@@ -19,8 +19,10 @@ from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, Upda
 from .const import (
     API_BASE_URL,
     CONF_API_KEY,
+    CONF_ENABLE_FLOW_SENSOR,
     CONF_SCAN_INTERVAL,
     CONF_SENSOR_NAME,
+    DEFAULT_ENABLE_FLOW_SENSOR,
     DEFAULT_SCAN_INTERVAL,
     DOMAIN,
 )
@@ -34,15 +36,13 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     api_key = entry.data[CONF_API_KEY]
     sensor_name = entry.data[CONF_SENSOR_NAME]
     scan_interval = entry.data.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL)
+    enable_flow = entry.data.get(CONF_ENABLE_FLOW_SENSOR, DEFAULT_ENABLE_FLOW_SENSOR)
 
     session = async_get_clientsession(hass)
-
-    # Speichert den letzten Abruf für die Durchflussberechnung
-    # Format: {"meter_value": float, "fetched_at": monotonic_time}
     previous_data: list[dict | None] = [None]
 
     async def async_fetch_data() -> dict:
-        """Aktuelle Zählerdaten von der Hydrop API abrufen."""
+        """Aktuelle Zählerdaten und Gerätemetadaten von der Hydrop API abrufen."""
         url = f"{API_BASE_URL}/{sensor_name}/newest"
         headers = {"apikey": api_key}
         fetch_time = time.monotonic()
@@ -63,12 +63,18 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                         "Bitte die Sensor-Bezeichnung in der Integration prüfen."
                     )
 
-                record = sensors[0]["records"][0]
+                sensor_obj = sensors[0]
+                record = sensor_obj["records"][0]
                 current_value = record.get("meterValue")
 
-                # Durchflussrate in m³/h berechnen
+                # Alle Metadaten aus dem Sensor-Objekt extrahieren (außer 'records')
+                device_meta = {
+                    k: v for k, v in sensor_obj.items() if k != "records"
+                }
+
+                # Durchflussrate in m³/h (nur wenn aktiviert)
                 flow_m3h: float | None = None
-                if previous_data[0] is not None and current_value is not None:
+                if enable_flow and previous_data[0] is not None and current_value is not None:
                     try:
                         delta_m3 = float(current_value) - float(
                             previous_data[0]["meter_value"]
@@ -93,6 +99,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                     "meter_value": current_value,
                     "timestamp": record.get("timestamp"),
                     "flow_m3h": flow_m3h,
+                    "device_meta": device_meta,
                 }
 
         except aiohttp.ClientResponseError as err:
