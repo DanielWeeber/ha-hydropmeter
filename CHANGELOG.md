@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.0.2] - 2026-03-07
+
+### Changed
+- Service Info card: version, manufacturer and integration author are now shown as separate fields instead of one long string
+  - **Firmware version:** `v1.0.2`
+  - **Manufacturer:** Hydrop Systems – hydrop-systems.com
+  - **Model:** Integration by Daniel Weeber (github.com/DanielWeeber)
+
+---
+
 ## [1.0.1] - 2026-03-07
 
 ### Added

@@ -25,7 +25,6 @@ from .const import (
     DEFAULT_ENTITY_UNIQUE_ID,
     DEFAULT_NAME,
     DOMAIN,
-    INTEGRATION_AUTHOR,
     INTEGRATION_URL,
     MANUFACTURER,
     MANUFACTURER_URL,
@@ -54,8 +53,8 @@ class _HydropBaseSensor(CoordinatorEntity, SensorEntity):
     """Gemeinsame Basis für alle Hydropmeter-Sensoren."""
 
     _attr_attribution = (
-        f"Integration by {INTEGRATION_AUTHOR} ({AUTHOR_URL})"
-        f" · Awesome Hardware by {MANUFACTURER} ({MANUFACTURER_URL})"
+        f"Integration by {AUTHOR_NAME} ({AUTHOR_URL})"
+        f" · Hardware by {MANUFACTURER} ({MANUFACTURER_URL})"
     )
 
     def __init__(
@@ -72,12 +71,9 @@ class _HydropBaseSensor(CoordinatorEntity, SensorEntity):
         return {
             "identifiers": {(DOMAIN, self._entry.entry_id)},
             "name": self._entry.data.get("name", DEFAULT_NAME),
-            "manufacturer": MANUFACTURER,
-            "model": "Hydropmeter",
-            "sw_version": (
-                f"Integration by {AUTHOR_NAME} (github.com/DanielWeeber)"
-                f" · v{VERSION}"
-            ),
+            "manufacturer": f"{MANUFACTURER} – {MANUFACTURER_URL}",
+            "model": f"Integration by {AUTHOR_NAME} ({AUTHOR_URL})",
+            "sw_version": f"v{VERSION}",
             "entry_type": DeviceEntryType.SERVICE,
             "configuration_url": INTEGRATION_URL,
         }
