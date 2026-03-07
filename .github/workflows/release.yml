@@ -1,0 +1,69 @@
+name: Auto-Release on Version Bump
+
+# Wird ausgelöst, wenn manifest.json auf main geändert wird
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'custom_components/hydropmeter/manifest.json'
+
+jobs:
+  release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Read version from manifest.json
+        id: version
+        run: |
+          VERSION=$(jq -r '.version' custom_components/hydropmeter/manifest.json)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "tag=v$VERSION" >> $GITHUB_OUTPUT
+          echo "Detected version: $VERSION"
+
+      - name: Check if release already exists
+        id: check
+        run: |
+          if gh release view "v${{ steps.version.outputs.version }}" > /dev/null 2>&1; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+            echo "Release v${{ steps.version.outputs.version }} already exists – skipping."
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+            echo "No existing release found – will create one."
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract changelog section for this version
+        if: steps.check.outputs.exists == 'false'
+        id: changelog
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          # Extrahiert den Block zwischen ## [X.Y.Z] und dem nächsten ## [
+          BODY=$(awk "/^## \\[$VERSION\\]/{found=1; next} found && /^## \\[/{exit} found{print}" CHANGELOG.md \
+            | sed '/^[[:space:]]*$/d' | sed '1{/^[[:space:]]*$/d}')
+          if [ -z "$BODY" ]; then
+            BODY="See [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md) for details."
+          fi
+          # Multiline-safe via GitHub Output Delimiter
+          echo "body<<RELEASE_BODY_EOF" >> $GITHUB_OUTPUT
+          echo "$BODY" >> $GITHUB_OUTPUT
+          echo "RELEASE_BODY_EOF" >> $GITHUB_OUTPUT
+
+      - name: Create GitHub Release
+        if: steps.check.outputs.exists == 'false'
+        run: |
+          gh release create "v${{ steps.version.outputs.version }}" \
+            --title "v${{ steps.version.outputs.version }}" \
+            --notes "${{ steps.changelog.outputs.body }}"
+          echo "✅ Release v${{ steps.version.outputs.version }} created successfully."
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
