@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.1.0] - 2026-10-20
+
+### Added
+- Plausibility filter for meter readings: values that drop or rise faster than the new option "Plausibility limit flow rate" (default 5 m³/h) are treated as camera misreads and ignored; the last valid value is kept. A new level that stays stable for 6 hours (e.g. meter replacement) is accepted.
+- New option `max_flow` in setup and options dialog.
+- Attributes `raw_value` and `rejected_readings` on the meter sensor.
+- Unit tests for the filter (`python3 -m unittest discover -s tests`).
+
+### Fixed
+- A single misread (e.g. 409 read as 499 m³) and the jump back no longer count as hundreds of m³ in the Energy Dashboard (incident 2026-04-12: +499 m³ phantom consumption).
+- The flow rate sensor only uses accepted readings.
+
+---
+
 ## [1.0.4] - 2026-03-07
 
 ### Fixed

@@ -16,10 +16,12 @@ from .const import (
     CONF_API_KEY,
     CONF_ENABLE_FLOW_SENSOR,
     CONF_ENTITY_UNIQUE_ID,
+    CONF_MAX_FLOW,
     CONF_SCAN_INTERVAL,
     CONF_SENSOR_NAME,
     DEFAULT_ENABLE_FLOW_SENSOR,
     DEFAULT_ENTITY_UNIQUE_ID,
+    DEFAULT_MAX_FLOW,
     DEFAULT_NAME,
     DEFAULT_SCAN_INTERVAL,
     DEFAULT_SENSOR_NAME,
@@ -76,6 +78,9 @@ class HydropMeterConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 vol.Optional(
                     CONF_ENABLE_FLOW_SENSOR, default=DEFAULT_ENABLE_FLOW_SENSOR
                 ): bool,
+                vol.Optional(
+                    CONF_MAX_FLOW, default=DEFAULT_MAX_FLOW
+                ): vol.All(vol.Coerce(float), vol.Range(min=0.5, max=100)),
             }
         )
 
@@ -133,6 +138,10 @@ class HydropMeterOptionsFlow(config_entries.OptionsFlow):
                         entry, CONF_ENABLE_FLOW_SENSOR, DEFAULT_ENABLE_FLOW_SENSOR
                     ),
                 ): bool,
+                vol.Optional(
+                    CONF_MAX_FLOW,
+                    default=_current(entry, CONF_MAX_FLOW, DEFAULT_MAX_FLOW),
+                ): vol.All(vol.Coerce(float), vol.Range(min=0.5, max=100)),
             }
         )
 

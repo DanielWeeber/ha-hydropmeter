@@ -20,12 +20,17 @@ from .const import (
     API_BASE_URL,
     CONF_API_KEY,
     CONF_ENABLE_FLOW_SENSOR,
+    CONF_ENTITY_UNIQUE_ID,
+    CONF_MAX_FLOW,
     CONF_SCAN_INTERVAL,
     CONF_SENSOR_NAME,
     DEFAULT_ENABLE_FLOW_SENSOR,
+    DEFAULT_ENTITY_UNIQUE_ID,
+    DEFAULT_MAX_FLOW,
     DEFAULT_SCAN_INTERVAL,
     DOMAIN,
 )
+from .meter_filter import MeterFilter
 
 _LOGGER = logging.getLogger(__name__)
 PLATFORMS = ["sensor"]
@@ -46,9 +51,12 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     sensor_name = _conf(CONF_SENSOR_NAME)
     scan_interval = _conf(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL)
     enable_flow = _conf(CONF_ENABLE_FLOW_SENSOR, DEFAULT_ENABLE_FLOW_SENSOR)
+    max_flow = float(_conf(CONF_MAX_FLOW, DEFAULT_MAX_FLOW))
 
     session = async_get_clientsession(hass)
     previous_data: list[dict | None] = [None]
+    meter_filter = MeterFilter(max_flow_m3h=max_flow)
+    _seed_filter(hass, entry, meter_filter)
 
     async def async_fetch_data() -> dict:
         """Aktuelle Zählerdaten und Gerätemetadaten von der Hydrop API abrufen."""
@@ -73,11 +81,28 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                     )
 
                 record = sensors[0]["records"][0]
-                current_value = record.get("meterValue")
+                raw_value = record.get("meterValue")
+                current_value = None
+                accepted = False
+                if raw_value is not None:
+                    try:
+                        current_value, accepted = meter_filter.process(
+                            float(raw_value), time.time()
+                        )
+                    except (TypeError, ValueError):
+                        _LOGGER.debug("Hydropmeter: Zählerstand nicht lesbar: %s", raw_value)
+                    if not accepted and current_value is not None:
+                        _LOGGER.warning(
+                            "Hydropmeter: unplausiblen Zählerstand %s m³ verworfen "
+                            "(letzter gültiger Wert %s m³, Grenze %s m³/h)",
+                            raw_value,
+                            current_value,
+                            max_flow,
+                        )
 
                 # Durchflussrate in m³/h (nur wenn aktiviert)
                 flow_m3h: float | None = None
-                if enable_flow and previous_data[0] is not None and current_value is not None:
+                if enable_flow and accepted and previous_data[0] is not None:
                     try:
                         delta_m3 = float(current_value) - float(
                             previous_data[0]["meter_value"]
@@ -92,7 +117,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                             "Hydropmeter: Durchflussberechnung nicht möglich"
                         )
 
-                if current_value is not None:
+                if accepted:
                     previous_data[0] = {
                         "meter_value": current_value,
                         "fetched_at": fetch_time,
@@ -100,6 +125,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
                 return {
                     "meter_value": current_value,
+                    "raw_value": raw_value,
+                    "rejected_readings": meter_filter.rejected_count,
                     "timestamp": record.get("timestamp"),
                     "flow_m3h": flow_m3h,
                 }
@@ -138,6 +165,31 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     entry.async_on_unload(entry.add_update_listener(async_reload_entry))
 
     return True
+
+
+def _seed_filter(hass: HomeAssistant, entry: ConfigEntry, meter_filter: MeterFilter) -> None:
+    """Filter mit dem letzten bekannten Zählerstand vorbelegen (Neustart/Neuladen).
+
+    Ohne Startwert würde ein Lesefehler direkt nach dem Start ungeprüft übernommen.
+    """
+    try:
+        from homeassistant.helpers import entity_registry as er
+        from homeassistant.helpers.restore_state import async_get as async_get_restore
+
+        uid = entry.data.get(CONF_ENTITY_UNIQUE_ID, DEFAULT_ENTITY_UNIQUE_ID)
+        entity_id = er.async_get(hass).async_get_entity_id("sensor", DOMAIN, uid)
+        if not entity_id:
+            return
+        state = hass.states.get(entity_id)
+        if state is None:
+            stored = async_get_restore(hass).last_states.get(entity_id)
+            state = stored.state if stored else None
+        if state is None:
+            return
+        meter_filter.seed(float(state.state), state.last_updated.timestamp())
+        _LOGGER.debug("Hydropmeter: Startwert %s m³ übernommen", state.state)
+    except (TypeError, ValueError, AttributeError, KeyError) as err:
+        _LOGGER.debug("Hydropmeter: kein Startwert für den Filter (%s)", err)
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:

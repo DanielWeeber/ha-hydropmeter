@@ -10,7 +10,8 @@
           "api_key": "API key",
           "entity_unique_id": "Internal ID (optional)",
           "scan_interval": "Update interval (seconds)",
-          "enable_flow_sensor": "Create flow rate sensor (m\u00b3/h)"
+          "enable_flow_sensor": "Create flow rate sensor (m\u00b3/h)",
+          "max_flow": "Plausibility limit flow rate (m\u00b3/h)"
         },
         "data_description": {
           "name": "What should the sensor be called in Home Assistant? E.g. 'Water Meter Basement'.",
@@ -18,7 +19,8 @@
           "api_key": "Your personal API key. Found in the Hydrop app under 'Settings'. Do not share.",
           "entity_unique_id": "Technical ID in Home Assistant. Leave default -- only change if you have multiple Hydropmeter devices.",
           "scan_interval": "How often (in seconds) the meter reading is fetched. Minimum: 60. Recommended: 300 (every 5 minutes).",
-          "enable_flow_sensor": "Enabled: The integration automatically creates a second sensor 'Flow rate (m\u00b3/h)'. The value appears after the second polling cycle. Disabled: Create a flow sensor manually via Settings -> Helpers -> Derivative (source: this water meter, time unit: hours)."
+          "enable_flow_sensor": "Enabled: The integration automatically creates a second sensor 'Flow rate (m\u00b3/h)'. The value appears after the second polling cycle. Disabled: Create a flow sensor manually via Settings -> Helpers -> Derivative (source: this water meter, time unit: hours).",
+          "max_flow": "Meter readings that rise faster than this flow rate or go down are treated as misreads and ignored (the last valid value is kept). A new level that stays stable for 6 hours (e.g. meter replacement) is accepted. Recommended: 5."
         }
       }
     },
@@ -48,14 +50,16 @@
           "sensor_name": "Sensor identifier",
           "api_key": "API key",
           "scan_interval": "Update interval (seconds)",
-          "enable_flow_sensor": "Create flow rate sensor (m\u00b3/h)"
+          "enable_flow_sensor": "Create flow rate sensor (m\u00b3/h)",
+          "max_flow": "Plausibility limit flow rate (m\u00b3/h)"
         },
         "data_description": {
           "name": "What should the sensor be called in Home Assistant?",
           "sensor_name": "Exact name of the sensor as shown in the Hydrop app. Case-sensitive.",
           "api_key": "Your personal API key from the Hydrop app. Do not share.",
           "scan_interval": "How often (in seconds) the meter reading is fetched. Minimum: 60. Recommended: 300.",
-          "enable_flow_sensor": "Enabled: A second sensor 'Flow rate (m\u00b3/h)' is created automatically. Disabled: Set up flow rate manually via Helpers -> Derivative."
+          "enable_flow_sensor": "Enabled: A second sensor 'Flow rate (m\u00b3/h)' is created automatically. Disabled: Set up flow rate manually via Helpers -> Derivative.",
+          "max_flow": "Meter readings that rise faster than this flow rate or go down are treated as misreads and ignored (the last valid value is kept). A new level that stays stable for 6 hours (e.g. meter replacement) is accepted. Recommended: 5."
         }
       }
     },
