@@ -103,6 +103,9 @@ class HydropMeterSensor(_HydropBaseSensor):
         return {
             "timestamp": self.coordinator.data.get("timestamp"),
             "sensor_name": self._entry.data.get(CONF_SENSOR_NAME),
+            # Rohwert der API und Zahl verworfener Lesefehler seit dem Start
+            "raw_value": self.coordinator.data.get("raw_value"),
+            "rejected_readings": self.coordinator.data.get("rejected_readings", 0),
         }
 
 

@@ -90,3 +90,4 @@ mcp__github__push_files(
 - `entry.options` hat Vorrang vor `entry.data` (Options-Flow-Änderungen wirken sofort)
 - Flow-Sensor-Berechnung: Delta m³ / Delta Stunden, nur bei `delta_m3 >= 0`
 - Durchfluss-Sensor gibt `0.0 m³/h` zurück wenn kein Wert vorliegt (nicht `None`/Unknown)
+- Zählerstände laufen durch `meter_filter.py` (Plausibilitätsfilter, ohne HA-Abhängigkeit); Tests: `python3 -m unittest discover -s tests`
